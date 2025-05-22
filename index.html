@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Speech Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        #result {
+            font-size: 4rem;
+            margin: 2rem 0;
+            color: #2196F3;
+        }
+        button {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #1976D2;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 1rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Number Speech Recognition</h1>
+        <p>Click the button and say a number between 1 and 100</p>
+        <div id="result">-</div>
+        <button id="startButton">Start Listening</button>
+        <p class="status" id="status">Click the button to start</p>
+    </div>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const result = document.getElementById('result');
+        const status = document.getElementById('status');
+
+        // Array of numbers written out in English
+        const writtenNumbers = [
+            'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+            'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty',
+            'twenty one', 'twenty two', 'twenty three', 'twenty four', 'twenty five', 'twenty six', 'twenty seven', 'twenty eight', 'twenty nine', 'thirty',
+            'thirty one', 'thirty two', 'thirty three', 'thirty four', 'thirty five', 'thirty six', 'thirty seven', 'thirty eight', 'thirty nine', 'forty',
+            'forty one', 'forty two', 'forty three', 'forty four', 'forty five', 'forty six', 'forty seven', 'forty eight', 'forty nine', 'fifty',
+            'fifty one', 'fifty two', 'fifty three', 'fifty four', 'fifty five', 'fifty six', 'fifty seven', 'fifty eight', 'fifty nine', 'sixty',
+            'sixty one', 'sixty two', 'sixty three', 'sixty four', 'sixty five', 'sixty six', 'sixty seven', 'sixty eight', 'sixty nine', 'seventy',
+            'seventy one', 'seventy two', 'seventy three', 'seventy four', 'seventy five', 'seventy six', 'seventy seven', 'seventy eight', 'seventy nine', 'eighty',
+            'eighty one', 'eighty two', 'eighty three', 'eighty four', 'eighty five', 'eighty six', 'eighty seven', 'eighty eight', 'eighty nine', 'ninety',
+            'ninety one', 'ninety two', 'ninety three', 'ninety four', 'ninety five', 'ninety six', 'ninety seven', 'ninety eight', 'ninety nine', 'one hundred'
+        ];
+
+        // Create grammar string
+        const grammarString = `#JSGF V1.0;
+        grammar numbers;
+        public <number> = ${writtenNumbers.join(' | ')};`;
+
+        // Get the appropriate SpeechGrammarList constructor
+        const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
+        
+        // Check if browser supports SpeechRecognition and SpeechGrammarList
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            status.textContent = 'Speech recognition is not supported in this browser.';
+            startButton.disabled = true;
+        } else if (!SpeechGrammarList) {
+            status.textContent = 'Speech grammar is not supported in this browser.';
+            startButton.disabled = true;
+        } else {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            // Create grammar object
+            const grammar = new SpeechGrammarList();
+            grammar.addFromString(grammarString, 1);
+            
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            recognition.grammars = grammar;
+
+            const doStart = () => {
+                recognition.start();
+                startButton.disabled = true;
+                status.textContent = 'Listening...';
+            }
+
+            startButton.addEventListener('click', () => {
+                doStart();
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.toLowerCase().trim();
+                
+                result.textContent = transcript;
+                status.textContent = 'Number recognized!';
+            };
+
+            recognition.onend = () => {
+                startButton.disabled = false;
+                status.textContent = 'Click the button to start';
+
+                setTimeout(() => {
+                    doStart();
+                }, 100);
+            };
+
+            recognition.onerror = (event) => {
+                status.textContent = 'Error occurred: ' + event.error;
+                startButton.disabled = false;
+            };
+        }
+    </script>
+</body>
+</html> 
